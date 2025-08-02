@@ -92,6 +92,37 @@ fun InsufficientCreditsDialog(
     )
 }
 
+@Composable
+fun PauseDialog(
+    onResume: () -> Unit,
+    onMainMenu: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AlertDialog(
+        onDismissRequest = onResume,
+        title = {
+            Text(
+                text = "게임 일시정지",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text("게임이 일시정지되었습니다.")
+        },
+        confirmButton = {
+            TextButton(onClick = onResume) {
+                Text("게임 재개")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onMainMenu) {
+                Text("메인 메뉴")
+            }
+        },
+        modifier = modifier
+    )
+}
+
 private fun formatTimeUntilReset(resetTimeMillis: Long): String {
     // 임시 구현 - 실제로는 현재 시간과 비교해서 남은 시간 계산
     return "자정"

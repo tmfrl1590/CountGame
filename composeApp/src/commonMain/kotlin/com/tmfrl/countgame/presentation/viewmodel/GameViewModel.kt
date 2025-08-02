@@ -207,9 +207,23 @@ class GameViewModel(
     }
 
     fun retryStage() {
-        val currentSession = _gameSession.value
-        if (currentSession != null) {
-            startStage(currentSession.currentStage)
+        viewModelScope.launch {
+            try {
+                if (!gameUseCase.canStartGame()) {
+                    _uiState.value = _uiState.value.copy(error = "크레딧이 부족합니다.")
+                    return@launch
+                }
+
+                if (!gameUseCase.startGameWithCredit()) {
+                    _uiState.value = _uiState.value.copy(error = "게임을 시작할 수 없습니다.")
+                    return@launch
+                }
+
+                // 다시 도전할 때는 1단계부터 시작
+                startStage(1)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = e.message)
+            }
         }
     }
 

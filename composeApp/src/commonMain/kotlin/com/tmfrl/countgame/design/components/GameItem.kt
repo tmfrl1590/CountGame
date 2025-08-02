@@ -1,6 +1,7 @@
 package com.tmfrl.countgame.design.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -19,12 +20,20 @@ import com.tmfrl.countgame.domain.model.GameItem
 @Composable
 fun GameItemView(
     item: GameItem,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
+    var baseModifier = modifier
+        .offset(item.x.dp, item.y.dp)
+        .size(64.dp)
+
+    if (onClick != null) {
+        baseModifier = baseModifier
+            .clickable { onClick() }
+    }
+
     Box(
-        modifier = modifier
-            .offset(item.x.dp, item.y.dp)
-            .size(48.dp)
+        modifier = baseModifier
             .scale(item.scale)
             .alpha(item.alpha)
             .rotate(item.rotation)

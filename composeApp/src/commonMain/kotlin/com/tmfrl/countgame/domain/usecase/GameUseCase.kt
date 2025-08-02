@@ -66,7 +66,7 @@ class GameUseCase(
                 velocityX = (Random.nextFloat() - 0.5f) * difficulty.speed * 100,
                 velocityY = (Random.nextFloat() - 0.5f) * difficulty.speed * 100,
                 rotation = if (difficulty.hasRotation) Random.nextFloat() * 360f else 0f,
-                scale = if (difficulty.hasScale) 0.7f + Random.nextFloat() * 0.6f else 1f,
+                scale = 1.0f + Random.nextFloat() * 0.4f, // scale range: 1.0~1.4 for counting game
                 alpha = if (difficulty.hasAlpha) 0.7f + Random.nextFloat() * 0.3f else 1f
             )
             items.add(item)
@@ -101,7 +101,8 @@ class GameUseCase(
         screenWidth: Float,
         screenHeight: Float
     ): List<GameItem> {
-        return items.map { item ->
+        // 1차 위치 업데이트 (경계 충돌 처리)
+        val updated = items.map { item ->
             var newX = item.x + item.velocityX * deltaTime
             var newY = item.y + item.velocityY * deltaTime
             var newVelocityX = item.velocityX
@@ -124,7 +125,46 @@ class GameUseCase(
                 velocityX = newVelocityX,
                 velocityY = newVelocityY
             )
+        }.toMutableList()
+
+        // 2차 아이템 간 충돌 처리 (간단한 탄성 충돌)
+        val baseItemSize = 48f // 기본 아이템 크기
+        for (i in 0 until updated.size) {
+            for (j in i + 1 until updated.size) {
+                val a = updated[i]
+                val b = updated[j]
+
+                // 각 아이템의 실제 크기 계산 (scale 적용)
+                val sizeA = baseItemSize * a.scale
+                val sizeB = baseItemSize * b.scale
+                val minDist = (sizeA + sizeB) / 2f // 두 원의 반지름 합
+
+                val dx = b.x - a.x
+                val dy = b.y - a.y
+                val distSq = dx * dx + dy * dy
+                if (distSq < minDist * minDist) {
+                    // 겹쳤으면 속도를 교환 (질량 동일 가정)
+                    updated[i] = a.copy(velocityX = b.velocityX, velocityY = b.velocityY)
+                    updated[j] = b.copy(velocityX = a.velocityX, velocityY = a.velocityY)
+
+                    // 위치를 정확히 분리하여 겹침 완전 해소
+                    val dist = kotlin.math.sqrt(distSq)
+                    val overlap = (minDist - dist) / 2f
+                    if (dist > 0) {
+                        val nx = dx / dist
+                        val ny = dy / dist
+                        updated[i] = updated[i].copy(x = a.x - nx * overlap, y = a.y - ny * overlap)
+                        updated[j] = updated[j].copy(x = b.x + nx * overlap, y = b.y + ny * overlap)
+                    } else {
+                        // 완전히 겹친 경우 강제로 분리
+                        updated[i] = updated[i].copy(x = a.x - minDist / 2f, y = a.y)
+                        updated[j] = updated[j].copy(x = b.x + minDist / 2f, y = b.y)
+                    }
+                }
+            }
         }
+
+        return updated
     }
 
     // 게임 세션 저장

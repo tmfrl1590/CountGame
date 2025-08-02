@@ -26,6 +26,7 @@ fun GameScreen(
     gameSession: GameSession,
     onAnswerSubmit: (Int) -> Unit,
     onPauseClick: () -> Unit,
+    credits: Int = 0,
     modifier: Modifier = Modifier
 ) {
     var userAnswer by remember { mutableStateOf(0) }
@@ -39,7 +40,8 @@ fun GameScreen(
             GameState.PLAYING -> {
                 PlayingGameView(
                     session = gameSession,
-                    onPauseClick = onPauseClick
+                    onPauseClick = onPauseClick,
+                    credits = credits
                 )
             }
 
@@ -62,7 +64,8 @@ fun GameScreen(
 @Composable
 private fun PlayingGameView(
     session: GameSession,
-    onPauseClick: () -> Unit
+    onPauseClick: () -> Unit,
+    credits: Int
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -71,6 +74,7 @@ private fun PlayingGameView(
         TopGameBar(
             stage = session.currentStage,
             timeRemaining = session.timeRemaining,
+            credits = credits,
             onPauseClick = onPauseClick
         )
 
@@ -164,8 +168,13 @@ private fun AnsweringGameView(
                 } ?: run {
                     // 전체 과일 개수 세기 (1-10단계)
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            4.dp,
+                            Alignment.CenterHorizontally
+                        )
                     ) {
                         val fruits = listOf("🍎", "🍌", "🥕", "🍇", "🍅", "🍑")
                         fruits.forEach { fruit ->
@@ -225,32 +234,51 @@ private fun AnsweringGameView(
 private fun TopGameBar(
     stage: Int,
     timeRemaining: Int,
+    credits: Int,
     onPauseClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 스테이지 표시
-        Text(
-            text = "${Strings.STAGE_LABEL} $stage",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        // 스테이지 표시 (카드 배경으로 가독성 향상)
+        Card(
+            shape = RoundedCornerShape(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Text(
+                text = "${stage}단계",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            )
+        }
 
         // 시간 표시
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "${Strings.TIME_REMAINING} ${timeRemaining}s",
-                style = MaterialTheme.typography.titleMedium,
-                color = if (timeRemaining <= 3) GameError else MaterialTheme.colorScheme.onBackground
-            )
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (timeRemaining <= 3) GameError else MaterialTheme.colorScheme.primaryContainer
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "${Strings.TIME_REMAINING} ${timeRemaining}s",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (timeRemaining <= 3) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 

@@ -86,7 +86,7 @@ fun MenuScreen(
 
                 // 메뉴 버튼들
                 GameButton(
-                    text = Strings.PLAY_BUTTON,
+                    text = Strings.SELECT_GAME,
                     onClick = onPlayClick,
                     fontSize = 18
                 )

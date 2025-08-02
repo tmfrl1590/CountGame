@@ -11,7 +11,22 @@ data class GameSession(
     val userAnswer: Int = 0,
     val state: GameState = GameState.READY,
     val timeRemaining: Int = 0,
-    val isPaused: Boolean = false
+    val isPaused: Boolean = false,
+    val gameType: GameType = GameType.COUNTING
+)
+
+// 터치 게임 세션
+data class TappingGameSession(
+    val currentStage: Int = 1,
+    val items: List<GameItem> = emptyList(),
+    val targetType: ItemType? = null, // 터뜨려야 할 과일 타입
+    val targetCount: Int = 0, // 터뜨려야 할 개수
+    val tappedCount: Int = 0, // 터뜨린 개수
+    val wrongTaps: Int = 0, // 잘못 터뜨린 개수
+    val state: GameState = GameState.READY,
+    val timeRemaining: Int = 0,
+    val isPaused: Boolean = false,
+    val gameType: GameType = GameType.TAPPING
 )
 
 // 게임 결과

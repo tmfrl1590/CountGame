@@ -25,6 +25,7 @@ fun ResultScreen(
     onNextStage: () -> Unit,
     onRetry: () -> Unit,
     onMainMenu: () -> Unit,
+    credits: Int = 0,
     modifier: Modifier = Modifier
 ) {
     val backgroundColor by animateColorAsState(
@@ -94,51 +95,79 @@ fun ResultScreen(
                         )
                     }
                 }
-                // 정답과 사용자 답변 비교
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                // 크레딧 정보 표시 (실패 시에만)
+                if (!result.isCorrect) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ),
+                        modifier = Modifier.padding(vertical = 8.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Text(
+                            text = "💎 남은 크레딧: ${credits}개",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+                // 정답과 사용자 답변 표시 (터치 게임이 아닌 경우만)
+                // 카운트 게임(isAllFruitsMode = true)일 때만 정답/답변 비교 표시
+                if (result.isAllFruitsMode == true) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = GameSuccess.copy(alpha = 0.1f)
+                            )
                         ) {
-                            Text(
-                                text = Strings.CORRECT_COUNT,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = result.correctAnswer.toString(),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = GameSuccess
-                            )
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = Strings.CORRECT_COUNT,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = GameSuccess
+                                )
+                                Text(
+                                    text = "${result.correctAnswer}개",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GameSuccess
+                                )
+                            }
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (result.isCorrect) GameSuccess.copy(alpha = 0.1f) else GameError.copy(
+                                    alpha = 0.1f
+                                )
+                            )
                         ) {
-                            Text(
-                                text = Strings.YOUR_ANSWER,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = result.userAnswer.toString(),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = if (result.isCorrect) GameSuccess else GameError
-                            )
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = Strings.YOUR_ANSWER,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (result.isCorrect) GameSuccess else GameError
+                                )
+                                Text(
+                                    text = "${result.userAnswer}개",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (result.isCorrect) GameSuccess else GameError
+                                )
+                            }
                         }
                     }
                 }

@@ -8,17 +8,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import com.tmfrl.countgame.data.repository.LocalGameRepository
 import com.tmfrl.countgame.design.components.InsufficientCreditsDialog
+import com.tmfrl.countgame.design.components.PauseDialog
 import com.tmfrl.countgame.design.theme.CountGameTheme
 import com.tmfrl.countgame.domain.usecase.GameUseCase
+import com.tmfrl.countgame.domain.usecase.TappingGameUseCase
 import com.tmfrl.countgame.presentation.ui.game.GameScreen
+import com.tmfrl.countgame.presentation.ui.gameselection.GameSelectionScreen
 import com.tmfrl.countgame.presentation.ui.menu.MenuScreen
 import com.tmfrl.countgame.presentation.ui.result.ResultScreen
 import com.tmfrl.countgame.presentation.ui.settings.SettingsScreen
 import com.tmfrl.countgame.presentation.ui.statistics.StatisticsScreen
+import com.tmfrl.countgame.presentation.ui.tappinggame.TappingGameScreen
 import com.tmfrl.countgame.presentation.viewmodel.GameViewModel
+import com.tmfrl.countgame.presentation.viewmodel.TappingGameViewModel
 
 @Composable
 fun App() {
@@ -28,15 +35,21 @@ fun App() {
         val useCase = remember { GameUseCase(repository) }
         val viewModel = viewModel { GameViewModel(useCase) }
 
-        CountGameNavigation(viewModel = viewModel)
+        // Tapping game dependencies
+        val tappingUseCase = remember { TappingGameUseCase(repository) }
+        val tappingViewModel = viewModel { TappingGameViewModel(tappingUseCase) }
+
+        CountGameNavigation(viewModel = viewModel, tappingViewModel = tappingViewModel)
     }
 }
 
 @Composable
 private fun CountGameNavigation(
-    viewModel: GameViewModel
+    viewModel: GameViewModel,
+    tappingViewModel: TappingGameViewModel
 ) {
     var currentScreen by remember { mutableStateOf(Screen.Menu) }
+
     var showInsufficientCreditsDialog by remember { mutableStateOf(false) }
 
     val uiState by viewModel.uiState.collectAsState()
@@ -44,12 +57,14 @@ private fun CountGameNavigation(
     val gameResult by viewModel.gameResult.collectAsState()
     val credits by viewModel.credits.collectAsState()
 
+    val tappingGameSession by tappingViewModel.gameSession.collectAsState()
+    val tappingGameResult by tappingViewModel.gameResult.collectAsState()
+
     when (currentScreen) {
         Screen.Menu -> {
             MenuScreen(
                 onPlayClick = {
-                    viewModel.startNewGame()
-                    currentScreen = Screen.Game
+                    currentScreen = Screen.GameSelection
                 },
                 onSettingsClick = {
                     currentScreen = Screen.Settings
@@ -61,7 +76,26 @@ private fun CountGameNavigation(
             )
         }
 
-        Screen.Game -> {
+        Screen.GameSelection -> {
+            GameSelectionScreen(
+                onGameSelected = { gameType ->
+                    when (gameType) {
+                        com.tmfrl.countgame.domain.model.GameType.COUNTING -> {
+                            viewModel.startNewGame()
+                            currentScreen = Screen.CountingGame
+                        }
+
+                        com.tmfrl.countgame.domain.model.GameType.TAPPING -> {
+                            tappingViewModel.startNewGame()
+                            currentScreen = Screen.TappingGame
+                        }
+                    }
+                },
+                onBackClick = { currentScreen = Screen.Menu }
+            )
+        }
+
+        Screen.CountingGame -> {
             gameSession?.let { session ->
                 when (session.state) {
                     com.tmfrl.countgame.domain.model.GameState.RESULT -> {
@@ -76,9 +110,33 @@ private fun CountGameNavigation(
                                 },
                                 onMainMenu = {
                                     currentScreen = Screen.Menu
-                                }
+                                },
+                                credits = credits.current
                             )
                         }
+                    }
+
+                    com.tmfrl.countgame.domain.model.GameState.PAUSED -> {
+                        // 일시정지 상태에서도 게임 화면을 보여주되, 일시정지 다이얼로그를 띄움
+                        GameScreen(
+                            gameSession = session,
+                            onAnswerSubmit = { answer ->
+                                viewModel.submitAnswer(answer)
+                            },
+                            onPauseClick = {
+                                viewModel.pauseGame()
+                            }
+                        )
+
+                        // 일시정지 다이얼로그
+                        PauseDialog(
+                            onResume = {
+                                viewModel.resumeGame()
+                            },
+                            onMainMenu = {
+                                currentScreen = Screen.Menu
+                            }
+                        )
                     }
 
                     else -> {
@@ -106,6 +164,63 @@ private fun CountGameNavigation(
                     currentScreen = Screen.Menu
                 }
             )
+        }
+
+        Screen.TappingGame -> {
+            tappingGameSession?.let { session ->
+                when (session.state) {
+                    com.tmfrl.countgame.domain.model.GameState.RESULT -> {
+                        tappingGameResult?.let { result ->
+                            ResultScreen(
+                                result = result,
+                                onNextStage = {
+                                    tappingViewModel.nextStage()
+                                },
+                                onRetry = {
+                                    tappingViewModel.retryStage()
+                                },
+                                onMainMenu = {
+                                    currentScreen = Screen.Menu
+                                },
+                                credits = credits.current
+                            )
+                        }
+                    }
+
+                    com.tmfrl.countgame.domain.model.GameState.PAUSED -> {
+                        TappingGameScreen(
+                            gameSession = session,
+                            onItemTap = { itemId ->
+                                tappingViewModel.tapItem(itemId)
+                            },
+                            onPauseClick = {
+                                tappingViewModel.pauseGame()
+                            }
+                        )
+
+                        PauseDialog(
+                            onResume = {
+                                tappingViewModel.resumeGame()
+                            },
+                            onMainMenu = {
+                                currentScreen = Screen.Menu
+                            }
+                        )
+                    }
+
+                    else -> {
+                        TappingGameScreen(
+                            gameSession = session,
+                            onItemTap = { itemId ->
+                                tappingViewModel.tapItem(itemId)
+                            },
+                            onPauseClick = {
+                                tappingViewModel.pauseGame()
+                            }
+                        )
+                    }
+                }
+            }
         }
 
         Screen.Statistics -> {
@@ -147,7 +262,9 @@ private fun CountGameNavigation(
 
 private enum class Screen {
     Menu,
-    Game,
+    GameSelection,
+    CountingGame,
+    TappingGame,
     Settings,
     Statistics
 }

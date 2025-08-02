@@ -2,11 +2,18 @@ package com.tmfrl.countgame.design
 
 object Strings {
     // Menu screen
-    const val APP_TITLE = "Count Storm"
+    const val APP_TITLE = "Fruits Storm"
     const val PLAY_BUTTON = "게임 시작"
     const val SETTINGS_BUTTON = "설정"
     const val STATISTICS_BUTTON = "통계"
     const val EXIT_BUTTON = "종료"
+
+    // Game selection
+    const val SELECT_GAME = "게임 선택"
+    const val COUNT_GAME = "과일 개수 세기"
+    const val COUNT_GAME_DESC = "떠다니는 과일의 개수를 세어보세요"
+    const val TAP_GAME = "과일 터뜨리기"
+    const val TAP_GAME_DESC = "지정된 과일을 빠르게 터뜨리세요"
 
     // Game screen
     const val STAGE_LABEL = "스테이지"

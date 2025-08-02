@@ -39,6 +39,12 @@ enum class GameState {
     FINISHED    // 게임 종료
 }
 
+// 게임 타입
+enum class GameType {
+    COUNTING,   // 개수 세기 게임
+    TAPPING     // 터치하여 터뜨리기 게임
+}
+
 // 게임 난이도 설정
 data class GameDifficulty(
     val stage: Int,
