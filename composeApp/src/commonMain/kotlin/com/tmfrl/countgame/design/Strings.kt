@@ -13,7 +13,7 @@ object Strings {
     const val COUNT_GAME = "과일 개수 세기"
     const val COUNT_GAME_DESC = "떠다니는 과일의 개수를 세어보세요"
     const val TAP_GAME = "과일 터뜨리기"
-    const val TAP_GAME_DESC = "지정된 과일을 빠르게 터뜨리세요"
+    const val TAP_GAME_DESC = "과일을 빠르게 터뜨리세요"
 
     // Game screen
     const val STAGE_LABEL = "스테이지"
@@ -78,4 +78,5 @@ object Strings {
     const val INSUFFICIENT_CREDITS = "크레딧이 부족합니다"
     const val DAILY_CREDITS_GRANTED = "무료 크레딧 10개가 지급되었습니다!"
     const val NEXT_FREE_CREDITS = "다음 무료 크레딧:"
+    const val WATCH_AD_FOR_CREDITS = "광고 시청 후 크레딧 얻기"
 }

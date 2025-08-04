@@ -5,12 +5,25 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.lexilabs.basic.ads.AdState
+import app.lexilabs.basic.ads.DependsOnGoogleMobileAds
+import app.lexilabs.basic.ads.DependsOnGoogleUserMessagingPlatform
+import app.lexilabs.basic.ads.composable.ConsentPopup
+import app.lexilabs.basic.ads.composable.RewardedAd
+import app.lexilabs.basic.ads.composable.rememberConsent
+import app.lexilabs.basic.ads.composable.rememberRewardedAd
+import app.lexilabs.basic.logging.Log
+import com.tmfrl.countgame.ContextFactory
 import com.tmfrl.countgame.design.components.CreditDisplay
 import com.tmfrl.countgame.design.components.IconTextButton
 import com.tmfrl.countgame.design.components.GameButton
@@ -18,14 +31,37 @@ import com.tmfrl.countgame.design.theme.GameBackground
 import com.tmfrl.countgame.domain.model.GameCredits
 import com.tmfrl.countgame.design.Strings
 
+@OptIn(DependsOnGoogleMobileAds::class, DependsOnGoogleUserMessagingPlatform::class)
 @Composable
 fun MenuScreen(
+    platformContext: ContextFactory,
     onPlayClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onStatisticsClick: () -> Unit,
     credits: GameCredits? = null,
     modifier: Modifier = Modifier
 ) {
+    val consent by rememberConsent(activity = platformContext.getActivity())
+    val rewardedAd by rememberRewardedAd(activity = platformContext.getActivity())
+    var showRewardedAd by remember { mutableStateOf(false) }
+
+    // Try to show a consent popup
+    ConsentPopup(
+        consent = consent,
+        onFailure = { Log.e("App", "failure:${it.message}")}
+    )
+
+    // 광고 배너
+    if (showRewardedAd && consent.canRequestAds){
+        RewardedAd(
+            loadedAd = rewardedAd,
+            onDismissed = { showRewardedAd = false},
+            onRewardEarned = {
+
+            }
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -91,17 +127,28 @@ fun MenuScreen(
                     fontSize = 18
                 )
 
-                IconTextButton(
-                    text = Strings.STATISTICS_BUTTON,
-                    icon = "📊",
-                    onClick = onStatisticsClick
-                )
+                // IconTextButton(
+                //     text = Strings.STATISTICS_BUTTON,
+                //     icon = "📊",
+                //     onClick = onStatisticsClick
+                // )
 
                 IconTextButton(
                     text = Strings.SETTINGS_BUTTON,
                     icon = "⚙️",
                     onClick = onSettingsClick
                 )
+
+                if(rewardedAd.state == AdState.READY){
+                    IconTextButton(
+                        text = Strings.WATCH_AD_FOR_CREDITS,
+                        icon = "📹",
+                        onClick = {
+                            showRewardedAd = true
+                        }
+                    )
+                }
+
             }
         }
     }

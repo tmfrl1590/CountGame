@@ -8,9 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import com.tmfrl.countgame.data.repository.LocalGameRepository
 import com.tmfrl.countgame.design.components.InsufficientCreditsDialog
 import com.tmfrl.countgame.design.components.PauseDialog
@@ -28,7 +26,7 @@ import com.tmfrl.countgame.presentation.viewmodel.GameViewModel
 import com.tmfrl.countgame.presentation.viewmodel.TappingGameViewModel
 
 @Composable
-fun App() {
+fun App(platformContext: ContextFactory) {
     CountGameTheme {
         // 의존성 주입 (실제로는 DI 프레임워크 사용 권장)
         val repository = remember { LocalGameRepository() }
@@ -39,14 +37,19 @@ fun App() {
         val tappingUseCase = remember { TappingGameUseCase(repository) }
         val tappingViewModel = viewModel { TappingGameViewModel(tappingUseCase) }
 
-        CountGameNavigation(viewModel = viewModel, tappingViewModel = tappingViewModel)
+        CountGameNavigation(
+            viewModel = viewModel,
+            tappingViewModel = tappingViewModel,
+            platformContext = platformContext,
+        )
     }
 }
 
 @Composable
 private fun CountGameNavigation(
     viewModel: GameViewModel,
-    tappingViewModel: TappingGameViewModel
+    tappingViewModel: TappingGameViewModel,
+    platformContext: ContextFactory,
 ) {
     var currentScreen by remember { mutableStateOf(Screen.Menu) }
 
@@ -63,6 +66,7 @@ private fun CountGameNavigation(
     when (currentScreen) {
         Screen.Menu -> {
             MenuScreen(
+                platformContext = platformContext,
                 onPlayClick = {
                     currentScreen = Screen.GameSelection
                 },
@@ -72,7 +76,7 @@ private fun CountGameNavigation(
                 onStatisticsClick = {
                     currentScreen = Screen.Statistics
                 },
-                credits = credits
+                credits = credits,
             )
         }
 
